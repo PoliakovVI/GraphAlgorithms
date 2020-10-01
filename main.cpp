@@ -27,6 +27,19 @@ int main() {
 	}
 	cout << endl << endl;
 
+	lenghts.clear();
+	list1.strongComponentSearch(lenghts);
+
+	i = 0;
+	cout << endl << endl;
+	for (const auto& item : lenghts) {
+		cout << i << " " << item << endl;
+		i++;
+	}
+	cout << endl << endl;
+
+	cout << endl << endl << "//////////////" << endl << endl;
+
 	SimpleAdjList list2("input.txt");
 	
 	lenghts.clear();
@@ -39,6 +52,8 @@ int main() {
 		cout << " " << item;
 	}
 	cout << endl << endl;
+
+	
 
 	getchar();
 	return 0;

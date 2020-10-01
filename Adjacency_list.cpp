@@ -8,6 +8,25 @@ enum COLOR {
 
 // DirAdjList
 
+//private
+
+DirAdjList& DirAdjList::reverse() {
+	map<int, set<int>> newlist;
+	for (const auto& item : list) {
+		for (const auto& elem : item.second) {
+			newlist[elem].insert(item.first);
+		}
+	}
+	swap(list, newlist);
+	return *this;
+}
+
+// public
+
+DirAdjList::DirAdjList() {
+
+}
+
 DirAdjList::DirAdjList(string filename) {
 	ifstream fin(filename);
 	string buffer;
@@ -24,6 +43,11 @@ DirAdjList::DirAdjList(string filename) {
 		}
 		fin.close();
 	}
+}
+
+DirAdjList::DirAdjList(const DirAdjList& dal) {
+	this->max_number = dal.max_number;
+	this->list = dal.list;
 }
 
 void DirAdjList::print(ostream& out, string fsep, string osep) {
@@ -81,7 +105,7 @@ int DirAdjList::bfs_distations(int node, vector<int>& lengths_empty) {
 	return 0;
 }
 
-void DFS_dir(bool& is_acyclic_start_true, const int v, vector<COLOR>& colors,
+void DFS_dir_acyclic(bool& is_acyclic_start_true, const int v, vector<COLOR>& colors,
 	map<int, set<int>>& list,
 	vector<int>& back_toporder) {
 	if (colors[v] == WHITE) {
@@ -90,7 +114,7 @@ void DFS_dir(bool& is_acyclic_start_true, const int v, vector<COLOR>& colors,
 			set<int> nodes = list[v];
 			for (const auto& item : nodes) {
 				if (colors[item] == WHITE) {
-					DFS_dir(is_acyclic_start_true, item, colors, list, back_toporder);
+					DFS_dir_acyclic(is_acyclic_start_true, item, colors, list, back_toporder);
 				}
 				if (colors[item] == GREY) {
 					is_acyclic_start_true = false;
@@ -110,10 +134,10 @@ int DirAdjList::dfs_acyclicityCheck(vector<int>& empty_vector) {
 	}
 	bool is_acyclic = true;
 	for (const auto& item : list) {
-		DFS_dir(is_acyclic, item.first, colors, list, toporder);
+		DFS_dir_acyclic(is_acyclic, item.first, colors, list, toporder);
 	}
+	swap(toporder, empty_vector);
 	if (is_acyclic) {
-		swap(toporder, empty_vector);
 		return 0;
 	}
 	else {
@@ -121,21 +145,89 @@ int DirAdjList::dfs_acyclicityCheck(vector<int>& empty_vector) {
 	}
 }
 
+void DFS_dir_color(const int v, vector<int>& colors,
+	int current_color, map<int, set<int>>& list,
+	vector<int>& back_toporder) {
+	if (colors[v] == -2) {
+		colors[v] = -1;
+		if (list.find(v) != list.end()) {
+			set<int> nodes = list[v];
+			for (const auto& item : nodes) {
+				if (colors[item] == -2) {
+					DFS_dir_color(item, colors,current_color, list, back_toporder);
+				} 
+			}
+		}
+		colors[v] = current_color;
+		back_toporder.push_back(v);
+	}
+}
+
+void DirAdjList::strongComponentSearch(vector<int>& empty_colors) {
+	vector<int> toporder;
+	vector<int> empty_vector;
+	empty_colors.clear();
+	for (int i = 0; i < max_number + 1; i++) {
+		empty_colors.push_back(-2); // white
+	}
+
+	bool is_acyclic = true;
+	for (const auto& item : list) {
+		DFS_dir_color(item.first, empty_colors, 1, list, toporder);
+	}
+
+	for (auto& color : empty_colors) {
+		color = -2; // white
+	}
+
+	std::reverse(toporder.begin(), toporder.end()); // making it direct
+
+	DirAdjList copy_list(*this);
+	copy_list.reverse();
+
+	int current_color = 0;
+	for (const auto& item : toporder) {
+		if (empty_colors[item] == -2) {
+			current_color++;
+			DFS_dir_color(item, empty_colors, current_color, copy_list.list, empty_vector);
+		}
+	}
+	for (auto& item : empty_colors) {
+		if (item == -2) {
+			current_color++;
+			item = current_color;
+		}
+	}
+}
+
 // SimpleAdjList
 
-SimpleAdjList::SimpleAdjList(string filename) : DirAdjList(filename) {
-	// making simple
+// private
+
+void SimpleAdjList::make_simple(map<int, set<int>>& list){
 	for (auto& item : list) {
 		for (auto& elem : item.second) {
 			int num = item.first;
-			
+
 			if (list.find(elem) == list.end()) {
 				list[elem].insert(num);
-			} else if (list[elem].find(num) == list[elem].end()) {
+			}
+			else if (list[elem].find(num) == list[elem].end()) {
 				list[elem].insert(num);
 			}
 		}
 	}
+}
+
+// public
+
+SimpleAdjList::SimpleAdjList(string filename) : DirAdjList(filename) {
+	make_simple(list);	
+}
+
+SimpleAdjList::SimpleAdjList(const SimpleAdjList* sal){
+	this->max_number = sal->max_number;
+	this->list = sal->list;
 }
 
 int SimpleAdjList::bfs_findComp(vector<int>& lengths_empty) {
@@ -205,8 +297,8 @@ int SimpleAdjList::dfs_acyclicityCheck(vector<int>& empty_vector) {
 	for (const auto& item : list) {
 		DFS_simple(is_acyclic, item.first, colors, list, toporder, -1);
 	}
+	swap(toporder, empty_vector);
 	if (is_acyclic) {
-		swap(toporder, empty_vector);
 		return 0;
 	}
 	else {
