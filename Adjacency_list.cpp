@@ -253,7 +253,7 @@ SimpleAdjList::SimpleAdjList(const SimpleAdjList* sal){
 	this->list = sal->list;
 }
 
-int SimpleAdjList::findComponents(vector<int>& lengths_empty) {
+void SimpleAdjList::findComponents(vector<int>& lengths_empty) {
 	queue<int> nodes;
 
 	vector<int> colors(max_number + 1);
@@ -293,7 +293,6 @@ int SimpleAdjList::findComponents(vector<int>& lengths_empty) {
 	}
 
 	swap(lengths_empty, colors);
-	return 0;
 }
 
 void DFS_simple(bool& is_acyclic_start_true, const int v, vector<COLOR>& colors,
@@ -345,4 +344,89 @@ int SimpleAdjList::acyclicityCheck(vector<int>& empty_vector) {
 
 void SimpleAdjList::strongComponentSearch(vector<int>& empty_vector) {
 	this->findComponents(empty_vector);
+}
+
+int DFS_simple_articulation_points(const int v, vector<int>& colors, 
+	map<int, set<int>>& list, vector<int>& M_statistics, vector<int>& entrances,
+	const int& parent, int& timer) {
+	colors[v] = -1; // <- grey
+	entrances[v] = timer; // <- timer
+	timer++;
+
+	int tree_edges_counter = 0;
+
+	// node in list existence
+	if (list.find(v) != list.end()) {
+		set<int> nodes = list[v];
+
+		for (const auto& item : nodes) {
+
+			if (colors[item] == -2) {
+				tree_edges_counter++;
+				DFS_simple_articulation_points(item, colors, list, M_statistics,
+					entrances, v, timer);
+
+				if (M_statistics[v] > 0) {
+					M_statistics[v] = min(M_statistics[v], M_statistics[item]);
+				}
+				else {
+					M_statistics[v] = M_statistics[item];
+					/*if (M_statistics[item] != -1) {
+						M_statistics[v] = M_statistics[item];
+					}
+					else {
+						M_statistics[v] = entrances[v];
+					}*/
+				}
+
+				if (M_statistics[item] >= entrances[v] || M_statistics[item] == -1) {
+					colors[v] = 1;
+				}
+			}
+			else if (colors[item] == -1 && parent != item) {
+				if (M_statistics[v] > 0) {
+					M_statistics[v] = min(M_statistics[v], entrances[item]);
+				}
+				else {
+					M_statistics[v] = entrances[item];
+				}
+			}
+		}
+	}
+	if (colors[v] != 1) colors[v] = 0;
+	return tree_edges_counter;
+}
+
+void SimpleAdjList::articulationPointsSearch(vector<int>& empty_vector){
+	vector<int> colors(max_number + 1);
+	vector<int> M_statistics(max_number + 1);
+	vector<int> entrances(max_number + 1);
+
+	for (auto& color : colors) {
+		color = -2;
+	}
+	for (auto& M : M_statistics) {
+		M = -1;
+	}
+
+	int timer = 1;
+
+	for (const auto& item : list) {
+		if (colors[item.first] == -2) {
+			int tree_edges_number = DFS_simple_articulation_points(item.first, colors, list, 
+				M_statistics, entrances, -1, timer);
+			if (tree_edges_number > 1) {
+				colors[item.first] = 1;
+			}
+			else {
+				colors[item.first] = 0;
+			}
+		}
+	}
+
+	for (auto& color : colors) {
+		if (color == -2) color = 0;
+	}
+
+	swap(colors, empty_vector);
 }

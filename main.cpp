@@ -13,12 +13,12 @@ void print_range(T itbegin, T itend, bool print_with_index = false) {
 }
 
 int main() {
-	DirAdjList list1("input.txt");
+	DirAdjList list1("test.txt");
 	list1.print(cout, ": ", ", ");
 	vector<int> vec;
 
 	cout << endl << "dists:" << endl;
-	list1.countDistations(1, vec);
+	list1.countDistations(6, vec);
 	print_range(vec.begin(), vec.end(), true);
 
 	cout << endl << "acyclicity:" << endl;
@@ -30,11 +30,11 @@ int main() {
 	print_range(vec.begin(), vec.end(), true);
 
 	
-	SimpleAdjList list2("input.txt");
+	SimpleAdjList list2("test.txt");
 	list2.print(cout, ": ", ", ");
 
 	cout << endl << "dists:" << endl;
-	list2.countDistations(1, vec);
+	list2.countDistations(6, vec);
 	print_range(vec.begin(), vec.end(), true);
 
 	cout << endl << "acyclicity:" << endl;
@@ -47,6 +47,10 @@ int main() {
 
 	cout << endl << "comp:" << endl;
 	list2.strongComponentSearch(vec);
+	print_range(vec.begin(), vec.end(), true);
+
+	cout << endl << "art points:" << endl;
+	list2.articulationPointsSearch(vec);
 	print_range(vec.begin(), vec.end(), true);
 
 	getchar();

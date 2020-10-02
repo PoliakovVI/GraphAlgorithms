@@ -26,9 +26,10 @@ class SimpleAdjList : public DirAdjList {
 public:
 	SimpleAdjList(string filename);
 	SimpleAdjList(const SimpleAdjList* sal);
-	int findComponents(vector<int>& lengths_empty); //lengths_empty - components numbers / BFS
+	void findComponents(vector<int>& lengths_empty); //lengths_empty - components numbers / BFS
 	int acyclicityCheck(vector<int>& empty_vector); // empty_vector includes topological order if it exists / DFS
-	void strongComponentSearch(vector<int>& empty_vector);
+	void strongComponentSearch(vector<int>& empty_vector); // findComponents wrapper
+	void articulationPointsSearch(vector<int>& empty_vector);
 private:
 	void make_simple(map<int, set<int>>& list);
 };
